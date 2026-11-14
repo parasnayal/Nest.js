@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  BadRequestException,
+} from '@nestjs/common';
 import { Task } from './task.type.js';
 import { TaskRepository } from './tasks.repository.js';
 import { TASK_REPOSITORY } from './tokens.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { AppException } from '../common/exceptions/app.exception.js';
+import { UpdateTaskDto } from './dto/update-task.dto.js';
 
 @Injectable()
 export class TasksService {
@@ -63,31 +69,30 @@ export class TasksService {
     return task;
   }
 
-  create(dto: CreateTaskDto): Task {
-    const task: Task = {
-      id: this.nextId++,
-      title: dto.title,
-      completed: dto.completed ?? false,
-    };
+  create(dto: CreateTaskDto) {
+    return this.taskRepository.create(dto.title);
+  }
+
+  async update(id: number, dto: UpdateTaskDto) {
+    if (dto.title === undefined && dto.completed === undefined) {
+      throw new BadRequestException('At least one field is required');
+    }
+
+    const task = await this.taskRepository.update(id, dto);
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
+    return task;
 
     return task;
   }
+  async remove(id: number) {
+    const deleted = await this.taskRepository.delete(id);
 
-  // update(id: number, data: Partial<Pick<Task, 'title' | 'completed'>>): Task {
-  //   const task = this.findOne(id);
-
-  //   if (data.title !== undefined) {
-  //     task.title = data.title;
-  //   }
-  //   if (data.completed !== undefined) {
-  //     task.completed = data.completed;
-  //   }
-
-  //   return task;
-  // }
-  // remove(id: number): void {
-  //   this.findOne(id);
-
-  //   this.tasks = this.tasks.filter((task) => task.id !== id);
-  // }
+    if (!deleted) {
+      throw new NotFoundException('Task not found');
+    }
+  }
 }
