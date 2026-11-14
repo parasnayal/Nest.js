@@ -3,6 +3,7 @@ import {
   NotFoundException,
   Inject,
   BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { Task } from './task.type.js';
 import { TaskRepository } from './tasks.repository.js';
@@ -10,6 +11,7 @@ import { TASK_REPOSITORY } from './tokens.js';
 import { CreateTaskDto } from './dto/create-task.dto.js';
 import { AppException } from '../common/exceptions/app.exception.js';
 import { UpdateTaskDto } from './dto/update-task.dto.js';
+import { DatabaseService } from '../database/database.service.js';
 
 @Injectable()
 export class TasksService {
@@ -43,6 +45,7 @@ export class TasksService {
   constructor(
     @Inject(TASK_REPOSITORY)
     private readonly taskRepository: TaskRepository,
+    private readonly database: DatabaseService,
   ) {}
 
   //   findAll(){
@@ -88,11 +91,37 @@ export class TasksService {
 
     return task;
   }
+
   async remove(id: number) {
     const deleted = await this.taskRepository.delete(id);
 
     if (!deleted) {
       throw new NotFoundException('Task not found');
     }
+  }
+
+  async completeTask(taskId: number) {
+    return this.database.withTransaction(async (client) => {
+      const task = await this.taskRepository.findByIdForUpdate(client, taskId);
+
+      if (!taskId) {
+        throw new NotFoundException('Task not found');
+      }
+
+      // 2. Apply business rule.
+      if (task?.completed) {
+        throw new ConflictException('Task is already completed');
+      }
+
+      const updatedTask = await this.taskRepository.markCompleted(
+        client,
+        taskId,
+      );
+
+      await this.taskRepository.insertAuditLog(client, taskId, 'COMPLETED');
+
+      // 5. Return result.
+      return updatedTask;
+    });
   }
 }
