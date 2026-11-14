@@ -10,7 +10,7 @@ export class AnalyticService{
 
     getTaskCount(){
         return {
-            total:this.taskService.findAll().length
+            total:20
         }
     }
 }

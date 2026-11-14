@@ -42,22 +42,19 @@ export class TasksService {
   //   findAll(){
   //     return this.tasks;
   //   }
-  findAll(search?: string): Task[] {
+  findAll(search?: string) {
     if (!search) {
-      console.log(this.taskRepository.findAll());
       return this.taskRepository.findAll();
     }
-    return this.taskRepository
-      .findAll()
-      .filter((task) =>
-        task.title.toLowerCase().includes(search.toLowerCase()),
-      );
+    // return this.taskRepository
+    //   .findAll()
+    //   .filter((task) =>
+    //     task.title.toLowerCase().includes(search.toLowerCase()),
+    //   );
   }
 
   async findOne(id: number): Promise<Task> {
-    const taskList = await this.taskRepository.findAll();
-
-    const task = taskList.find((item) => item.id === id);
+    const task = await this.taskRepository.findById(id);
 
     if (!task) {
       throw new AppException(404, 'TASK_NOT_FOUND', 'Task not found');

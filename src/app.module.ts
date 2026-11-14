@@ -19,7 +19,7 @@ import { validateEnv } from './config/env.validation.js';
 @Module({
   // imports: [],
   controllers: [HealthController],
-  imports: [TasksModule, AnalyticsModule,ConfigModule.forRoot({
+  imports: [TasksModule,ConfigModule.forRoot({
     isGlobal:true,
     validate:validateEnv
   })],

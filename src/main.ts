@@ -25,6 +25,10 @@ async function bootstrap() {
       },
     }),
   );
+
+   // Enables NestJS shutdown hooks for supported signals.
+  app.enableShutdownHooks();
+  
   // const config = app.get(ConfigService);
   const config = app.get(ConfigService<EnvConfig,true>);
 
